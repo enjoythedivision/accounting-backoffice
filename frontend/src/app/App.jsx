@@ -1,12 +1,12 @@
 import { Routes, Route } from "react-router-dom";
-import Sidebar from "./components/Sidebar";
+import Sidebar from "../components/layout/Sidebar";
 import "./App.scss";
-import Dashboard from "./features/dashboard/pages/Dashboard";
-import Customers from "./features/customers/pages/Customers";
-import Customer from "./features/customers/pages/Customer";
-import AddNewCustomer from "./features/customers/pages/AddNewCustomer";
-import EditCustomer from "./features/customers/pages/EditCustomer";
-import AddNote from "./features/customers/pages/AddNote";
+import Dashboard from "../features/dashboard/pages/Dashboard";
+import Customers from "../features/customers/pages/Customers";
+import Customer from "../features/customers/pages/Customer";
+import AddNewCustomer from "../features/customers/pages/AddNewCustomer";
+import EditCustomer from "../features/customers/pages/EditCustomer";
+import AddNote from "../features/customers/pages/AddNote";
 
 export default function App() {
   return (

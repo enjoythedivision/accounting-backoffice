@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import "./Customers.scss";
 import { Link, useSearchParams } from "react-router-dom";
+import { getCustomers, restoreCustomer } from "../api/customersApi.js";
 
 export default function Customers() {
   const [search, setSearch] = useState("");
@@ -18,13 +19,7 @@ export default function Customers() {
 
     async function loadCustomers() {
       try {
-        const response = await fetch(
-          `http://localhost:5021/api/customers?archived=${showArchived}`,
-        );
-
-        if (!response.ok) throw new Error("Customers could not be loaded");
-
-        const data = await response.json();
+        const data = await getCustomers(showArchived);
         if (!ignore) {
           setCustomers(data);
           setError("");
@@ -52,11 +47,7 @@ export default function Customers() {
     setError("");
 
     try {
-      const response = await fetch(`http://localhost:5021/api/customers/${id}/restore`, {
-        method: "PATCH",
-      });
-
-      if (!response.ok) throw new Error("Customer could not be restored");
+      await restoreCustomer(id);
 
       setCustomers((current) => current.filter((customer) => customer.id !== id || !customer.isArchived));
     } catch {

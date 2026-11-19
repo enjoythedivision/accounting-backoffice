@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
+import { getCustomer, updateCustomer } from "../api/customersApi.js";
 
 export default function EditCustomer() {
   const { id } = useParams();
@@ -9,16 +10,19 @@ export default function EditCustomer() {
   const [fee, setFee] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [loadError, setLoadError] = useState("");
 
   useEffect(() => {
     async function loadCustomer() {
-      const response = await fetch(`http://localhost:5021/api/customers/${id}`);
-
-      const customer = await response.json();
-
-      setName(customer.name);
-      setFee(customer.monthlyFee);
-      setLoading(false);
+      try {
+        const customer = await getCustomer(id);
+        setName(customer.name);
+        setFee(customer.monthlyFee);
+      } catch {
+        setLoadError("Could not load the customer. Please reload the page.");
+      } finally {
+        setLoading(false);
+      }
     }
 
     loadCustomer();
@@ -26,6 +30,10 @@ export default function EditCustomer() {
 
   if (loading) {
     return <div className="customer-form"><Link className="back-link" to={`/customer/${id}`}>← Back to customer</Link><h1>Loading...</h1></div>;
+  }
+
+  if (loadError) {
+    return <div className="customer-form"><Link className="back-link" to="/">← Back to customers</Link><p role="alert">{loadError}</p></div>;
   }
 
   async function handleEdit(e) {
@@ -36,25 +44,14 @@ export default function EditCustomer() {
     if (!fee) return;
 
     try {
-      const response = await fetch(`http://localhost:5021/api/customers/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: name.trim(),
-          monthlyFee: Number(fee),
-        }),
+      await updateCustomer(id, {
+        name: name.trim(),
+        monthlyFee: Number(fee),
       });
-
-      if (!response.ok) {
-        setError("Could not save the changes. Please try again.");
-        return;
-      }
 
       navigate(`/customer/${id}`);
     } catch {
-      setError("Could not connect to the server. Please try again.");
+      setError("Could not save the changes. Check your connection and try again.");
     }
   }
 

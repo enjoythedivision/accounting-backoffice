@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { createCustomer } from "../api/customersApi.js";
 
 export default function AddNewCustomer() {
   const [name, setName] = useState("");
@@ -16,25 +17,14 @@ export default function AddNewCustomer() {
     if (!fee) return;
 
     try {
-      const response = await fetch("http://localhost:5021/api/customers", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: name.trim(),
-          monthlyFee: Number(fee),
-        }),
+      await createCustomer({
+        name: name.trim(),
+        monthlyFee: Number(fee),
       });
-
-      if (!response.ok) {
-        setError("Could not save the customer. Please try again.");
-        return;
-      }
 
       navigate("/");
     } catch {
-      setError("Could not connect to the server. Please try again.");
+      setError("Could not save the customer. Check your connection and try again.");
     }
   }
 

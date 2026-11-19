@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import styles from "./Dashboard.module.scss";
+import { getCustomers } from "../../customers/api/customersApi.js";
 
 export default function Dashboard() {
   const [customers, setCustomers] = useState([]);
@@ -11,11 +12,7 @@ export default function Dashboard() {
   const month = now.getMonth() + 1;
 
   useEffect(() => {
-    fetch("http://localhost:5021/api/customers")
-      .then((response) => {
-        if (!response.ok) throw new Error();
-        return response.json();
-      })
+    getCustomers()
       .then(setCustomers)
       .catch(() =>
         setError(

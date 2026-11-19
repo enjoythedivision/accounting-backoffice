@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
+import { createNote } from "../api/notesApi.js";
 export default function AddNote() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -9,11 +10,7 @@ export default function AddNote() {
     e.preventDefault();
     if (!note.trim()) return;
     try {
-      const response = await fetch(`http://localhost:5021/api/customers/${id}/notes`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: note.trim() }),
-      });
-      if (!response.ok) throw new Error();
+      await createNote(id, note.trim());
       navigate(`/customer/${id}`);
     } catch { setError("Could not save your note. Please try again."); }
   };

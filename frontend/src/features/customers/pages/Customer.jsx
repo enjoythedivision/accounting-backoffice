@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import "./Customer.scss";
-import PaymentGrid from "./PaymentGrid.jsx";
+import PaymentGrid from "../components/PaymentGrid.jsx";
+import { getCustomer, archiveCustomer } from "../api/customersApi.js";
+import { getNotes, deleteNote } from "../api/notesApi.js";
+import { setPaymentStatus } from "../api/paymentsApi.js";
 
 export default function Customer() {
   const { id } = useParams();
@@ -22,16 +25,7 @@ export default function Customer() {
   useEffect(() => {
     async function fetchCustomer() {
       try {
-        const response = await fetch(
-          `http://localhost:5021/api/customers/${id}`,
-        );
-
-        if (!response.ok) {
-          setCustomer(null);
-          return;
-        }
-
-        const data = await response.json();
+        const data = await getCustomer(id);
         setCustomer(data);
       } catch (error) {
         console.error("Failed to fetch customer:", error);
@@ -42,11 +36,12 @@ export default function Customer() {
     }
 
     async function fetchNotes() {
-      const response = await fetch(
-        `http://localhost:5021/api/customers/${id}/notes`,
-      );
-      const data = await response.json();
-      setNotes(data);
+      try {
+        const data = await getNotes(id);
+        setNotes(data);
+      } catch (error) {
+        console.error("Failed to fetch notes:", error);
+      }
     }
 
     fetchCustomer();
@@ -55,17 +50,7 @@ export default function Customer() {
 
   async function handleArchive() {
     try {
-      const response = await fetch(
-        `http://localhost:5021/api/customers/${id}`,
-        {
-          method: "DELETE",
-        },
-      );
-
-      if (!response.ok) {
-        console.error("Failed to archive customer");
-        return;
-      }
+      await archiveCustomer(id);
 
       navigate("/");
     } catch (error) {
@@ -88,18 +73,7 @@ export default function Customer() {
     setPaymentError("");
 
     try {
-      const response = await fetch(
-        `http://localhost:5021/api/customers/${id}/payments/${year}/${month}`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ isPaid }),
-        },
-      );
-
-      if (!response.ok) throw new Error("Payment was not saved");
-
-      const updatedPayment = await response.json();
+      const updatedPayment = await setPaymentStatus(id, year, month, isPaid);
 
       setCustomer((current) => {
         if (current?.id !== updatedPayment.customerId) return current;
@@ -118,19 +92,12 @@ export default function Customer() {
   }
 
   const handleDeleteNote = async (noteId) => {
-    const response = await fetch(
-      `http://localhost:5021/api/customers/${id}/notes/${noteId}`,
-      {
-        method: "DELETE",
-      },
-    );
-
-    if (!response.ok) {
-      console.error("Failed to delete note");
-      return;
+    try {
+      await deleteNote(id, noteId);
+      setNotes((currentNotes) => currentNotes.filter((n) => n.id !== noteId));
+    } catch (error) {
+      console.error("Failed to delete note:", error);
     }
-
-    setNotes((currentNotes) => currentNotes.filter((n) => n.id !== noteId));
   };
 
   return (

@@ -1,4 +1,4 @@
-@font-face { font-family: MyFont; src: url("./assets/fonts/NAMU-Pro.woff2") format("woff2"); font-weight: normal; font-style: normal; font-display: swap; }
+@font-face { font-family: MyFont; src: url("../assets/fonts/NAMU-Pro.woff2") format("woff2"); font-weight: normal; font-style: normal; font-display: swap; }
 :root { --evergreen: #006450; --teal: #2DAA8C; --lime: #B4E669; --bg: #FAFAF7; --surface: #FFFFFF; --border: #EAEAE3; --text: #1C1C1A; --text-muted: #6B6B63; }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, sans-serif; font-size: 15px; line-height: 1.5; }
