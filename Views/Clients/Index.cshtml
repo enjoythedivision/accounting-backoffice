@@ -1,0 +1,8 @@
+@model List<Accounting.BackOffice.Models.Client>
+
+<h1>Πελατολόγιο</h1>
+
+@foreach (var client in Model)
+{
+    <p>@client.FullName</p>
+}

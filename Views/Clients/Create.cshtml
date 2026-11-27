@@ -1,0 +1,10 @@
+@model Accounting.BackOffice.Models.Client
+
+<h1>Προσθήκη Πελάτη</h1>
+<form asp-action="Create" method="post">
+    <input type="text" name="FullName" placeholder="Όνομα Πελάτη" />
+    <input type="text" name="Email" placeholder="Email Πελάτη" />
+    <input type="tel" name="Phone" placeholder="Τηλέφωνο Πελάτη" />
+    <input type="number" name="MonthlyFee" step="0.01" placeholder="Μηνιαία Οφειλή" />
+    <button type="submit">Προσθήκη</button>
+</form>

@@ -21,12 +21,16 @@ if (!process.env.DATABASE_URL?.trim()) {
 
 const child = spawn("dotnet", [
   "run", "--project", "Accounting.BackOffice.csproj",
-  "--configuration", "Release", "--no-build", "--no-launch-profile",
+  "--configuration", "Release", "--no-launch-profile",
   "--", ...process.argv.slice(2),
 ], {
   cwd: root,
   stdio: "inherit",
-  env: { ...process.env, ASPNETCORE_URLS: process.env.ASPNETCORE_URLS || "http://localhost:5000" },
+  env: {
+    ...process.env,
+    ASPNETCORE_ENVIRONMENT: process.env.ASPNETCORE_ENVIRONMENT || process.env.DOTNET_ENVIRONMENT || "Development",
+    ASPNETCORE_URLS: process.env.ASPNETCORE_URLS || "http://localhost:5000",
+  },
 });
 
 for (const signal of ["SIGINT", "SIGTERM"]) {
