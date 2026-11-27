@@ -95,15 +95,16 @@ dotnet run --configuration Release -- --check-database # Test the configured DbC
 dotnet run --configuration Release                    # Start MVC at http://localhost:5000
 ```
 
-`InitialCreate` creates `Clients`, `ClientFees`, and EF's migration history table. `database update` applies migrations not already recorded in that database. Review new migrations before applying them; do not delete migrations or drop databases to fix a schema mismatch. Application startup never applies migrations.
+The migration history evolves the schema to `Clients`, `MonthlyPayments`, `ClientNotes`, and EF's migration history table. `database update` applies migrations not already recorded in that database. Review new migrations before applying them; do not delete migrations or drop databases to fix a schema mismatch. Application startup never applies migrations.
 
 After future model changes, run `dotnet ef migrations add <DescriptiveName> --output-dir Data/Migrations -- --environment Development`, inspect the generated code, then apply it with `database update`.
 
 ## Model rules
 
 - `Client.FullName` is required and limited to 200 characters. Nullable `Phone` and `Email` validate their formats and are limited to 30 and 254 characters.
-- `ClientFee.MonthlyAmount` validates from 0.01 through 9,999,999,999.99 and stores as `numeric(12,2)`. A database check also requires a positive stored amount.
-- The unique `(ClientId, EffectiveFrom)` index prevents duplicate fee start dates for a client.
-- EF conventions use `Id` for primary keys and `ClientId`/`Client` for the required foreign key. The existing required relationship uses cascade deletion by convention: deleting a client also deletes its fees.
+- `Client.MonthlyFee` and `MonthlyPayment.Amount` validate from 0.01 through 9,999 and store as `numeric(6,2)`. Each obligation stores its own amount.
+- The unique `(ClientId, Year, Month)` index permits only one obligation per client and month. `PaidAt` is nullable: null means unpaid; a timestamp means paid.
+- `ClientNote.Content` is required. Both notes and monthly payments belong to a client through `ClientId`/`Client` and the corresponding collections.
+- EF conventions use `Id` for primary keys and required foreign keys with cascade deletion. Setting `IsActive` to false archives a client without deleting related rows; business workflows are not implemented yet.
 
-Data Annotations support MVC validation and EF column mapping. `[Phone]`, `[EmailAddress]`, and `[Range]` do not automatically validate every `SaveChanges` call. The positive-fee check is the only Fluent API rule because EF Core has no built-in Data Annotation for check constraints.
+Data Annotations support MVC validation and EF column mapping. `[Phone]`, `[EmailAddress]`, and `[Range]` do not automatically validate every `SaveChanges` call. The DbContext uses conventions and Data Annotations without additional Fluent API rules.

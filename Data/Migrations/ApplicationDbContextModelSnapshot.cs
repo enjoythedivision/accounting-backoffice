@@ -40,6 +40,10 @@ namespace Accounting.BackOffice.Data.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
+                    b.Property<decimal>("MonthlyFee")
+                        .HasPrecision(6, 2)
+                        .HasColumnType("numeric(6,2)");
+
                     b.Property<string>("Phone")
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)");
@@ -49,7 +53,7 @@ namespace Accounting.BackOffice.Data.Migrations
                     b.ToTable("Clients");
                 });
 
-            modelBuilder.Entity("Accounting.BackOffice.Models.ClientFee", b =>
+            modelBuilder.Entity("Accounting.BackOffice.Models.ClientNote", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -58,25 +62,62 @@ namespace Accounting.BackOffice.Data.Migrations
                     b.Property<Guid>("ClientId")
                         .HasColumnType("uuid");
 
-                    b.Property<DateOnly>("EffectiveFrom")
-                        .HasColumnType("date");
-
-                    b.Property<decimal>("MonthlyAmount")
-                        .HasPrecision(12, 2)
-                        .HasColumnType("numeric(12,2)");
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ClientId", "EffectiveFrom")
-                        .IsUnique();
+                    b.HasIndex("ClientId");
 
-                    b.ToTable("ClientFees");
+                    b.ToTable("ClientNotes");
                 });
 
-            modelBuilder.Entity("Accounting.BackOffice.Models.ClientFee", b =>
+            modelBuilder.Entity("Accounting.BackOffice.Models.MonthlyPayment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(6, 2)
+                        .HasColumnType("numeric(6,2)");
+
+                    b.Property<Guid>("ClientId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Month")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("PaidAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClientId", "Year", "Month")
+                        .IsUnique();
+
+                    b.ToTable("MonthlyPayments");
+                });
+
+            modelBuilder.Entity("Accounting.BackOffice.Models.ClientNote", b =>
                 {
                     b.HasOne("Accounting.BackOffice.Models.Client", "Client")
-                        .WithMany("Fees")
+                        .WithMany("Notes")
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Client");
+                });
+
+            modelBuilder.Entity("Accounting.BackOffice.Models.MonthlyPayment", b =>
+                {
+                    b.HasOne("Accounting.BackOffice.Models.Client", "Client")
+                        .WithMany("Payments")
                         .HasForeignKey("ClientId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -86,7 +127,9 @@ namespace Accounting.BackOffice.Data.Migrations
 
             modelBuilder.Entity("Accounting.BackOffice.Models.Client", b =>
                 {
-                    b.Navigation("Fees");
+                    b.Navigation("Notes");
+
+                    b.Navigation("Payments");
                 });
 #pragma warning restore 612, 618
         }

@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.EntityFrameworkCore;
+
 namespace Accounting.BackOffice.Models;
 
 public class Client
@@ -17,8 +19,15 @@ public class Client
     [StringLength(254)]
     public string? Email { get; set; }
 
+    [Precision(6, 2)]
+    [Range(0.01, 9999)]
+    public decimal MonthlyFee { get; set; }
+
     public bool IsActive { get; set; } = true;
 
-    public ICollection<ClientFee> Fees { get; set; }
-        = new List<ClientFee>();
+    public ICollection<MonthlyPayment> Payments { get; set; }
+        = new List<MonthlyPayment>();
+
+    public ICollection<ClientNote> Notes { get; set; }
+        = new List<ClientNote>();
 }

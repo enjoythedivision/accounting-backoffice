@@ -11,5 +11,6 @@ public class ApplicationDbContext : DbContext
     }
 
     public DbSet<Client> Clients { get; set; }
-    public DbSet<ClientFee> ClientFees { get; set; }
+    public DbSet<MonthlyPayment> MonthlyPayments { get; set; }
+    public DbSet<ClientNote> ClientNotes { get; set; }
 }
