@@ -53,5 +53,17 @@ namespace Accounting.BackOffice.Controllers
 
             return RedirectToAction("Index");
         }
+
+        public async Task<IActionResult> Details(Guid id)
+        {
+            var client = await _clientRepository.GetClientByIdAsync(id);
+            if (client is null)
+            {
+                return NotFound();
+            }
+
+            return View(client);
+            
+        }
     }
 }
