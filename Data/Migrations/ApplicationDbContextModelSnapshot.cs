@@ -79,10 +79,7 @@ namespace Accounting.BackOffice.Data.Migrations
                     b.HasIndex("ClientId", "EffectiveFrom")
                         .IsUnique();
 
-                    b.ToTable("ClientFees", t =>
-                        {
-                            t.HasCheckConstraint("CK_ClientFees_MonthlyAmount_Positive", "\"MonthlyAmount\" > 0");
-                        });
+                    b.ToTable("ClientFees");
                 });
 
             modelBuilder.Entity("Accounting.BackOffice.Models.ClientFee", b =>
