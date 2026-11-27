@@ -1,0 +1,13 @@
+{
+  "name": "accounting-backoffice",
+  "private": true,
+  "scripts": {
+    "build": "dotnet build Accounting.BackOffice.slnx --configuration Release",
+    "start": "node scripts/run-neon.mjs",
+    "check:database": "node scripts/run-neon.mjs --check-database"
+  },
+  "dependencies": {
+    "@neon/config": "^1.14.8",
+    "@neon/env": "^2.1.11"
+  }
+}

@@ -5,10 +5,16 @@ using Npgsql;
 var builder = WebApplication.CreateBuilder(args);
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var databaseUrl = builder.Configuration["DATABASE_URL"];
+if (!string.IsNullOrWhiteSpace(databaseUrl))
+{
+    connectionString = NeonConnectionString.FromUrl(databaseUrl);
+}
+
 if (string.IsNullOrWhiteSpace(connectionString))
 {
     throw new InvalidOperationException(
-        "ConnectionStrings:DefaultConnection is required. Configure User Secrets for development or ConnectionStrings__DefaultConnection in the deployment environment.");
+        "DATABASE_URL or ConnectionStrings:DefaultConnection is required. Configure Neon environment variables or development User Secrets.");
 }
 
 // Validate syntax without including configuration values in the exception.
@@ -34,6 +40,11 @@ if (args.Contains("--check-database", StringComparer.Ordinal))
     await using var scope = app.Services.CreateAsyncScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     var canConnect = await dbContext.Database.CanConnectAsync();
+    if (canConnect)
+    {
+        await dbContext.Database.ExecuteSqlRawAsync("SELECT 1");
+        Console.WriteLine("PostgreSQL SELECT 1 succeeded through ApplicationDbContext.");
+    }
     Console.WriteLine(canConnect ? "PostgreSQL connection succeeded." : "PostgreSQL connection failed. Check database availability and configuration.");
     Environment.ExitCode = canConnect ? 0 : 1;
     await app.DisposeAsync();

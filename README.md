@@ -1,44 +1,69 @@
 # Accounting.BackOffice
 
-ASP.NET Core MVC application targeting .NET 10. This phase configures PostgreSQL and EF Core only; there are no domain entities, migrations, or authentication yet.
+ASP.NET Core MVC on .NET 10, using Entity Framework Core with Npgsql and Neon PostgreSQL. An existing local Postgres.app server can also be used through User Secrets.
 
-## Prerequisites
+## Neon setup and verification
 
-- A stable .NET 10 SDK compatible with `global.json` (verified with SDK 10.0.103).
-- Docker Engine and Docker Compose v2. On this Apple Silicon Mac, follow the [Docker Desktop for Mac installation instructions](https://docs.docker.com/desktop/setup/install/mac-install/), select the Apple Silicon download, install it in Applications, launch it, and finish setup. Wait for the engine to start.
+Neon hosts PostgreSQL; the MVC application still runs on a .NET host. The repository is linked locally to project `fancy-tree-00565266`, branch `production`, in organization `org-holy-brook-97378483`. `.neon` records that link locally and is ignored by Git.
 
-Verify the engine and Compose before continuing:
-
-```sh
-docker version
-docker compose version
-```
-
-## Local database
-
-From the repository root, copy `.env.example` to `.env` if `.env` does not already exist. Replace both placeholders with a development username and a long random password (for example, generate a password with `openssl rand -hex 32`). Restrict file access with `chmod 600 .env`. Keep `.env` out of Git; only `.env.example` is shared.
+Use the existing .NET 10 SDK and Node.js/npm for Neon CLI tooling. The installed CLI's optional skills installer requires Node 22.20.0 or newer (this Mac currently has 22.18.0); the installed Neon plugin already includes its PostgreSQL skill.
 
 ```sh
-docker compose up -d --wait
-docker compose ps
-docker compose exec postgres sh -c 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+npm ci
+npx neon@latest login
+npx neon@latest init -y --org-id org-holy-brook-97378483 --project-id fancy-tree-00565266 --branch production --services postgres
+npx neon@latest deploy
+npm run build
+npm run check:database
+npm start
 ```
 
-The official `postgres:17` image exposes `accounting_backoffice` at `127.0.0.1:5432`. Data persists in a Compose-managed named volume mounted at `/var/lib/postgresql/data`. The health check measures server readiness; the application check below also verifies credentials through EF Core. The major-version image tag receives PostgreSQL 17 maintenance updates; use `docker compose pull` deliberately when updating local infrastructure.
+Complete CLI authentication in the browser on this Mac when prompted. A global `neon` installation can be used instead of `npx neon@latest` if available. Initialization is a one-time setup; if already linked, use `deploy` to reconcile `neon.ts` and refresh the environment variables.
+
+`deploy` pulls `DATABASE_URL` (pooled), `DATABASE_URL_UNPOOLED` (direct), and branch metadata into `.env.local`, or `.env` if that file exists. These files contain credentials and are ignored by Git. Do not print or commit their contents. After a pull, restrict access with `chmod 600 .env.local` (or `.env`).
+
+`npm run build` runs the Release .NET build. `npm start` loads the CLI-selected env file using Node's built-in env-file support and starts the existing MVC application at `http://localhost:5000`. Existing process environment variables take priority over the file. Change the URL with `ASPNETCORE_URLS` if needed. The Node process is a local launcher, not a database driver or web server. Production .NET hosting needs only the injected environment variables and the .NET runtime.
+
+The app reads `DATABASE_URL` before the legacy `ConnectionStrings:DefaultConnection` setting so old local User Secrets cannot silently redirect Neon traffic. `NeonConnectionString` converts the PostgreSQL URL to Npgsql's native connection-string format, safely decodes credentials, and enforces certificate/hostname verification (`SSL Mode=VerifyFull`) and SCRAM channel binding. Npgsql/EF Core remains the database stack; no JavaScript database driver is used. URL query options cannot weaken these TLS settings.
+
+`npm run check:database` uses the same launcher and configuration as the app, resolves `ApplicationDbContext` through DI, opens the connection, and executes read-only `SELECT 1`. It exits unsuccessfully if the connection fails. The command does not create tables or apply migrations. Successful connection verification does not establish that the domain schema has been migrated.
+
+For production, inject `DATABASE_URL` through your hosting platform's secret store. The `DATABASE_URL_UNPOOLED` value is reserved for future explicitly approved migration/admin work; it is not used for web traffic. No migrations run automatically or as part of Neon setup. Review and test migrations on an isolated branch before changing production.
+
+## Optional local PostgreSQL prerequisites
+
+- A stable .NET 10 SDK compatible with `global.json` (verified with 10.0.103).
+- Your existing Postgres.app installation with its PostgreSQL server running. Select PostgreSQL 17 if that is the installed server version; do not replace an existing cluster or its data.
+
+Open Postgres.app and start its server. Use the app's Start/Stop controls to manage it without deleting data. The examples below assume port 5432 and the standard application path; substitute your installation path or port if different.
 
 ```sh
-docker compose stop        # Stop while preserving containers and data
-docker compose start      # Restart existing containers
-docker compose down       # Remove containers/network; preserve database volume
+export PATH="/Applications/Postgres.app/Contents/Versions/latest/bin:$PATH"
+pg_isready -h 127.0.0.1 -p 5432
 ```
 
-`docker compose down --volumes` permanently deletes local database data. Image initialization variables apply only to a new volume; changing `.env` does not change credentials in an existing database. Rotate existing database credentials explicitly and update User Secrets to match.
+`export` makes the bundled PostgreSQL tools available in the current terminal. `pg_isready` checks server readiness, not application credentials. See the [Postgres.app CLI documentation](https://postgresapp.com/documentation/cli-tools.html) for alternate paths.
 
-## Application configuration
+## Database and User Secrets
 
-Compose reads `.env` for `POSTGRES_USER` and `POSTGRES_PASSWORD`. ASP.NET Core does not load `.env`. Store the matching connection string in .NET User Secrets, associated with the `UserSecretsId` in the project. User Secrets are outside the repository and are not encrypted; use them only for development.
+Check for the dedicated development role and database first, using the local Postgres.app administrator (normally your macOS username):
 
-Run the following command, paste the JSON below with the username and password from `.env`, then press Control-D (macOS/Linux) to end input. Supplying JSON through standard input avoids putting credentials in command arguments or shell history. For passwords containing a semicolon or quote, apply Npgsql connection-string quoting as well as JSON escaping; a generated hexadecimal password avoids this issue.
+```sh
+psql -d postgres -c "SELECT rolname FROM pg_roles WHERE rolname = 'accounting_dev';"
+psql -d postgres -c "SELECT datname FROM pg_database WHERE datname = 'accounting_backoffice';"
+```
+
+If they do not exist, create the role and a database owned by it. `--pwprompt` asks for a password without placing it in command arguments:
+
+```sh
+createuser --pwprompt --no-superuser --no-createdb --no-createrole accounting_dev
+createdb --owner=accounting_dev accounting_backoffice
+psql -h 127.0.0.1 -U accounting_dev -d accounting_backoffice -W -c "SELECT current_user, current_database();"
+```
+
+The dedicated role owns this development database so it can apply migrations, without server-wide administrator rights. Keep existing databases and credentials intact. Keep the server bound to localhost. Postgres.app controls client connection permissions; approve access in its local dialog if prompted. Use password authentication for TCP connections if your existing server configuration requires it; a successful connection to a server configured with `trust` does not verify the supplied password.
+
+Save the matching connection string in .NET User Secrets. They are outside Git but are not encrypted, so use them only for development. Run this command, paste the JSON below with the password substituted, then press Control-D to end input:
 
 ```sh
 dotnet user-secrets set --project Accounting.BackOffice.csproj
@@ -46,31 +71,39 @@ dotnet user-secrets set --project Accounting.BackOffice.csproj
 
 ```json
 {
-  "ConnectionStrings:DefaultConnection": "Host=127.0.0.1;Port=5432;Database=accounting_backoffice;Username=<local-username>;Password=<local-password>;Timeout=5"
+  "ConnectionStrings:DefaultConnection": "Host=127.0.0.1;Port=5432;Database=accounting_backoffice;Username=accounting_dev;Password=<database-password>;Timeout=5"
 }
 ```
 
-User Secrets load in the `Development` environment. The default `dotnet run` launch profile sets this environment. Missing or malformed connection configuration fails startup with a message that does not include the supplied value.
+Standard input keeps credentials out of command arguments and shell history. Apply connection-string quoting and JSON escaping if the password contains special characters. Do not put credentials in tracked settings. Direct `dotnet run` does not load `.env` files; use `npm start` for the Neon env-file launcher.
 
-For production, inject `ConnectionStrings__DefaultConnection` using the deployment platform's secret store and environment configuration. Use a dedicated least-privilege database role and configure verified TLS (for example, `SSL Mode=VerifyFull` and the appropriate trusted certificate). The Compose initialization role is a local development superuser; this Compose file is not a production database deployment.
+User Secrets load in `Development`. The launch profiles used by `dotnet run` already select it. EF commands below explicitly select it. For production, inject `ConnectionStrings__DefaultConnection` through the deployment platform's secret store; use a least-privilege role and verified TLS.
 
-## Restore, build, and run
+## Restore, migrate, and run
 
-```sh
-dotnet restore Accounting.BackOffice.slnx --locked-mode
-dotnet tool restore
-dotnet ef --version
-dotnet build Accounting.BackOffice.slnx --configuration Release --no-restore
-dotnet run --project Accounting.BackOffice.csproj --configuration Release --no-build -- --check-database
-dotnet run --project Accounting.BackOffice.csproj --configuration Release --no-build
-```
-
-Open `http://localhost:5000` using the default HTTP launch profile. For HTTPS, run `dotnet dev-certs https --trust` once and select `--launch-profile https`.
-
-`--check-database` resolves `ApplicationDbContext` from dependency injection, calls `Database.CanConnectAsync()`, and exits with code 0 on success or 1 on failure. It does not start the web server or change the schema. Ordinary application startup does not require an available database; use the explicit check to verify connectivity. Migrations are never applied automatically.
-
-Dependencies are pinned in the project/tool manifest and the resolved NuGet graph is recorded in `packages.lock.json`. Restore with `--locked-mode` for reproducible builds. After intentional package changes, regenerate and review the lock file. Check direct and transitive advisories with:
+From the repository root:
 
 ```sh
-dotnet list Accounting.BackOffice.csproj package --vulnerable --include-transitive
+dotnet restore Accounting.BackOffice.slnx --locked-mode  # Restore the locked package versions
+dotnet tool restore                                   # Restore repository-local dotnet-ef
+dotnet build Accounting.BackOffice.slnx -c Release --no-restore
+
+dotnet ef migrations list --configuration Release -- --environment Development
+dotnet ef database update --configuration Release -- --environment Development
+
+dotnet run --configuration Release -- --check-database # Test the configured DbContext
+dotnet run --configuration Release                    # Start MVC at http://localhost:5000
 ```
+
+`InitialCreate` creates `Clients`, `ClientFees`, and EF's migration history table. `database update` applies migrations not already recorded in that database. Review new migrations before applying them; do not delete migrations or drop databases to fix a schema mismatch. Application startup never applies migrations.
+
+After future model changes, run `dotnet ef migrations add <DescriptiveName> --output-dir Data/Migrations -- --environment Development`, inspect the generated code, then apply it with `database update`.
+
+## Model rules
+
+- `Client.FullName` is required and limited to 200 characters. Nullable `Phone` and `Email` validate their formats and are limited to 30 and 254 characters.
+- `ClientFee.MonthlyAmount` validates from 0.01 through 9,999,999,999.99 and stores as `numeric(12,2)`. A database check also requires a positive stored amount.
+- The unique `(ClientId, EffectiveFrom)` index prevents duplicate fee start dates for a client.
+- EF conventions use `Id` for primary keys and `ClientId`/`Client` for the required foreign key. The existing required relationship uses cascade deletion by convention: deleting a client also deletes its fees.
+
+Data Annotations support MVC validation and EF column mapping. `[Phone]`, `[EmailAddress]`, and `[Range]` do not automatically validate every `SaveChanges` call. The positive-fee check is the only Fluent API rule because EF Core has no built-in Data Annotation for check constraints.
