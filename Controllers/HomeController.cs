@@ -1,8 +1,8 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using AccountingBackoffice.Models;
+using Accounting.BackOffice.Models;
 
-namespace AccountingBackoffice.Controllers;
+namespace Accounting.BackOffice.Controllers;
 
 public class HomeController : Controller
 {

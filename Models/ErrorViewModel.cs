@@ -1,4 +1,4 @@
-namespace AccountingBackoffice.Models;
+namespace Accounting.BackOffice.Models;
 
 public class ErrorViewModel
 {

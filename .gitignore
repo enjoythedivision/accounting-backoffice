@@ -11,6 +11,8 @@ TestResults/
 *.user
 *.suo
 *.sln.docstates
+*.sln.iml
+*.DotSettings.user
 *.local
 
 # Logs and operating system files
@@ -24,5 +26,7 @@ Thumbs.db
 .env.*
 !.env.example
 appsettings.Local.json
+appsettings.*.Local.json
+secrets.json
 *.pfx
 *.p12
