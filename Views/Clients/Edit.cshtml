@@ -1,0 +1,21 @@
+﻿@model Accounting.BackOffice.Models.Client
+
+<h1>Επεξεργασία πελάτη</h1>
+
+<form asp-action="Edit" method="post">
+
+    <div asp-validation-summary="All"></div>
+
+    <input type="hidden" asp-for="Id" />
+
+    <input asp-for="FullName" placeholder="Ονοματεπώνυμο" />
+
+    <input asp-for="Email" placeholder="Email" />
+
+    <input asp-for="Phone" placeholder="Τηλέφωνο" />
+
+    <input asp-for="MonthlyFee" type="number" step="0.01" />
+
+    <button type="submit">Αποθήκευση αλλαγών</button>
+
+</form>

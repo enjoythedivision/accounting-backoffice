@@ -4,5 +4,7 @@
 
 @foreach (var client in Model)
 {
-    <p>@client.FullName</p>
+    <a asp-action="Details" asp-route-id="@client.Id">
+        @client.FullName
+    </a>
 }

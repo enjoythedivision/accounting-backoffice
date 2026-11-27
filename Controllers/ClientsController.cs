@@ -63,7 +63,41 @@ namespace Accounting.BackOffice.Controllers
             }
 
             return View(client);
-            
+
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Edit(Guid id)
+        {
+            var clientToEdit = await _clientRepository.GetClientByIdAsync(id);
+            if (clientToEdit is null)
+            {
+                return NotFound();
+            }
+
+            return View(clientToEdit);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(
+            [Bind("Id,FullName,Phone,Email,MonthlyFee")] Client client)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(client);
+            }
+
+            var clientToEdit = await _clientRepository.GetClientByIdAsync(client.Id);
+
+            if (clientToEdit is null)
+            {
+                return NotFound();
+            }
+
+            await _clientRepository.UpdateAsync(client);
+
+            return RedirectToAction("Index");
         }
     }
 }
