@@ -37,5 +37,12 @@ namespace Accounting.BackOffice.Controllers
 
             return View(client);
         }
+
+        [HttpDelete]
+        public async Task<IActionResult> Delete(Client client)
+        {
+            await _clientRepository.DeleteAsync(client);
+            return View("Index");
+        }
     }
 }
