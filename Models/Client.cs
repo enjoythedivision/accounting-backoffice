@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-
 namespace Accounting.BackOffice.Models;
 
 public class Client
@@ -18,13 +17,8 @@ public class Client
     [StringLength(254)]
     public string? Email { get; set; }
 
-    public DateOnly StartDate { get; set; }
+    public bool IsActive { get; set; } = true;
 
-    public DateOnly? EndDate { get; set; }
-
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
-    public DateTime? UpdatedAt { get; set; }
-
-    public ICollection<ClientFee> Fees { get; set; } = new List<ClientFee>();
+    public ICollection<ClientFee> Fees { get; set; }
+        = new List<ClientFee>();
 }
