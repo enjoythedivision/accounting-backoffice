@@ -1,5 +1,6 @@
 using Accounting.BackOffice.Data;
 using Microsoft.EntityFrameworkCore;
+using Accounting.BackOffice.Repositories;
 using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -31,6 +32,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+builder.Services.AddScoped<IClientRepository, ClientRepository>();
 
 var app = builder.Build();
 
