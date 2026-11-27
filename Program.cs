@@ -7,6 +7,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 var databaseUrl = builder.Configuration["DATABASE_URL"];
+if (builder.Environment.IsDevelopment() && string.IsNullOrWhiteSpace(databaseUrl))
+{
+    databaseUrl = DevelopmentDatabaseUrl.Read(builder.Environment.ContentRootPath);
+}
 if (!string.IsNullOrWhiteSpace(databaseUrl))
 {
     connectionString = NeonConnectionString.FromUrl(databaseUrl);

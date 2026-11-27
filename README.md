@@ -22,7 +22,9 @@ Complete CLI authentication in the browser on this Mac when prompted. A global `
 
 `deploy` pulls `DATABASE_URL` (pooled), `DATABASE_URL_UNPOOLED` (direct), and branch metadata into `.env.local`, or `.env` if that file exists. These files contain credentials and are ignored by Git. Do not print or commit their contents. After a pull, restrict access with `chmod 600 .env.local` (or `.env`).
 
-`npm run build` runs the Release .NET build. `npm start` loads the CLI-selected env file using Node's built-in env-file support, builds the Release application, and starts it at `http://localhost:5000`. Building on startup keeps generated static-asset manifests in sync with the current source. Existing process environment variables take priority over the file. Change the URL with `ASPNETCORE_URLS` if needed. The Node process is a local launcher, not a database driver or web server. Production .NET hosting needs only the injected environment variables and the .NET runtime.
+Run `dotnet run` to build and start the application at `http://localhost:5000`. In Development, the app reads `DATABASE_URL` from `.env`, or `.env.local` if `.env` does not exist. An explicitly configured `DATABASE_URL` takes priority. This works without Node or the npm launcher. Stop an existing app instance with Ctrl+C before starting another on the same port.
+
+`npm run build` runs the Release .NET build. `npm start` remains an alternative launcher that loads the CLI-selected env file using Node's built-in env-file support and builds the Release application. Existing process environment variables take priority over the file. Change its URL with `ASPNETCORE_URLS` if needed. Production .NET hosting needs only the injected environment variables and the .NET runtime; local env files are not loaded in Production.
 
 The app reads `DATABASE_URL` before the legacy `ConnectionStrings:DefaultConnection` setting so old local User Secrets cannot silently redirect Neon traffic. `NeonConnectionString` converts the PostgreSQL URL to Npgsql's native connection-string format, safely decodes credentials, and enforces certificate/hostname verification (`SSL Mode=VerifyFull`) and SCRAM channel binding. Npgsql/EF Core remains the database stack; no JavaScript database driver is used. URL query options cannot weaken these TLS settings.
 
@@ -75,9 +77,9 @@ dotnet user-secrets set --project Accounting.BackOffice.csproj
 }
 ```
 
-Standard input keeps credentials out of command arguments and shell history. Apply connection-string quoting and JSON escaping if the password contains special characters. Do not put credentials in tracked settings. Direct `dotnet run` does not load `.env` files; use `npm start` for the Neon env-file launcher.
+Standard input keeps credentials out of command arguments and shell history. Apply connection-string quoting and JSON escaping if the password contains special characters. Do not put credentials in tracked settings. In Development, `dotnet run` also reads the Neon `DATABASE_URL` from the selected local env file.
 
-User Secrets load in `Development`. The launch profiles used by `dotnet run` already select it. EF commands below explicitly select it. For production, inject `ConnectionStrings__DefaultConnection` through the deployment platform's secret store; use a least-privilege role and verified TLS.
+User Secrets load in `Development`. The launch profiles used by `dotnet run` already select it. EF commands below explicitly select it. A `DATABASE_URL` in the local env file takes priority over the legacy local PostgreSQL connection string; remove that entry when deliberately switching to local PostgreSQL. For production, inject `ConnectionStrings__DefaultConnection` through the deployment platform's secret store; use a least-privilege role and verified TLS.
 
 ## Restore, migrate, and run
 

@@ -38,11 +38,20 @@ namespace Accounting.BackOffice.Controllers
             return View(client);
         }
 
-        [HttpDelete]
-        public async Task<IActionResult> Delete(Client client)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(Guid id)
         {
+            var client = await _clientRepository.GetClientByIdAsync(id);
+
+            if (client == null)
+            {
+                return NotFound();
+            }
+
             await _clientRepository.DeleteAsync(client);
-            return View("Index");
+
+            return RedirectToAction("Index");
         }
     }
 }
