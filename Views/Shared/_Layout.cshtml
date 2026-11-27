@@ -9,7 +9,7 @@
 <body>
     <header>
         <nav aria-label="Main navigation">
-            <a class="brand" asp-controller="Home" asp-action="Index">Accounting.BackOffice</a>
+            <a class="brand" asp-controller="Home" asp-action="Index">Promousas Accounting</a>
             <a asp-controller="Home" asp-action="Index">Home</a>
             <a asp-controller="Home" asp-action="Privacy">Privacy</a>
         </nav>
@@ -17,7 +17,7 @@
     <main>
         @RenderBody()
     </main>
-    <footer>&copy; @DateTime.UtcNow.Year Accounting.BackOffice</footer>
+    <footer>&copy; @DateTime.UtcNow.Year Promousas Accounting</footer>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
