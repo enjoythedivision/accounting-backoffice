@@ -1,9 +1,44 @@
+using Accounting.BackOffice.Data;
+using Microsoft.EntityFrameworkCore;
+using Npgsql;
+
 var builder = WebApplication.CreateBuilder(args);
+
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException(
+        "ConnectionStrings:DefaultConnection is required. Configure User Secrets for development or ConnectionStrings__DefaultConnection in the deployment environment.");
+}
+
+// Validate syntax without including configuration values in the exception.
+try
+{
+    _ = new NpgsqlConnectionStringBuilder(connectionString);
+}
+catch (ArgumentException)
+{
+    throw new InvalidOperationException("ConnectionStrings:DefaultConnection is not a valid PostgreSQL connection string.");
+}
+
+builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(connectionString));
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
+
+// Explicit, read-only connectivity check; never creates schema or applies migrations.
+if (args.Contains("--check-database", StringComparer.Ordinal))
+{
+    await using var scope = app.Services.CreateAsyncScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var canConnect = await dbContext.Database.CanConnectAsync();
+    Console.WriteLine(canConnect ? "PostgreSQL connection succeeded." : "PostgreSQL connection failed. Check database availability and configuration.");
+    Environment.ExitCode = canConnect ? 0 : 1;
+    await app.DisposeAsync();
+    return;
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
