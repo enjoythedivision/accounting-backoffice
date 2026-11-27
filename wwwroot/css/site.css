@@ -1,0 +1,46 @@
+:root {
+  font-family: system-ui, sans-serif;
+  color: #20252b;
+  background: #fff;
+  line-height: 1.6;
+}
+
+body {
+  max-width: 72rem;
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.25rem 0;
+  border-bottom: 1px solid #dce1e6;
+}
+
+a {
+  color: #175b99;
+}
+
+.brand {
+  margin-right: auto;
+  color: inherit;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+main {
+  flex: 1;
+  padding: 2rem 0;
+}
+
+footer {
+  padding: 1rem 0;
+  border-top: 1px solid #dce1e6;
+  color: #58636f;
+}

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - accounting-backoffice</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <header>
+        <nav aria-label="Main navigation">
+            <a class="brand" asp-controller="Home" asp-action="Index">accounting-backoffice</a>
+            <a asp-controller="Home" asp-action="Index">Home</a>
+            <a asp-controller="Home" asp-action="Privacy">Privacy</a>
+        </nav>
+    </header>
+    <main>
+        @RenderBody()
+    </main>
+    <footer>&copy; @DateTime.UtcNow.Year accounting-backoffice</footer>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
